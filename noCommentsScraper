@@ -1,0 +1,338 @@
+# formGuideScraper built by Glenn Woodward
+# glenn@glennwoodward.com
+from builtins import print
+
+from bs4 import BeautifulSoup
+import requests
+import re
+
+
+with open("source_html.html") as html_file:
+    soup = BeautifulSoup(html_file, "html.parser")
+fullPage = soup.find("div", class_= "split-left")
+raceLocation = soup.find("span", class_= "inborder")
+raceNum = soup.find('span', class_= 'race')
+raceNumber = raceNum.text.split()[1]
+raceDis = soup.find('div', class_= 'eventname')
+raceDistance = raceDis.text.split()[0]
+raceDistance = str(raceDistance)
+raceDistance = raceDistance.replace('m','')
+trackCond = soup.find('div', id = 'weather-conditions')
+trackConditions = trackCond.text.split()[1]
+horseBasics = soup.find('div', class_='runner-stats')
+#print(horseBasics.text)
+pattern = re.compile(r'Win(\d*)%')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    winRate = match[1]
+pattern = re.compile(r'Prizemoney\$(.+)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    prizeMoney = match[1]
+prizeMoney = str(prizeMoney)
+prizeMoney = prizeMoney.replace(',','')
+prizeMoney = float(prizeMoney)
+horseNumber = soup.find('div', class_='runner-summary clearfix')
+horseNumber = int(horseNumber.text.split()[0])
+horseName = soup.find('div', class_='runner-summary clearfix')
+horseName = horseName.text.split()[1]
+barrierNumber = soup.find('span', class_='runner-barrier')
+barrierNumber = barrierNumber.text.replace('(','')
+barrierNumber = int(barrierNumber.replace(')',''))
+jockeyName = soup.find('td', class_='td180 ajockey')
+jockeyName= jockeyName.text.split('\n')
+jockeyName = (jockeyName[1].replace('  ','').replace('(','').replace(')',''))
+pattern = re.compile(r'Jockey(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    jockeyHorStats = match[1]
+    totalRuns = jockeyHorStats.split()[0]
+    jockeyHorRuns = int(totalRuns.replace(':', ''))
+    jockeyHorWin = int((jockeyHorStats.split()[1]).split('-')[0])
+    if int(jockeyHorWin) > 0:
+        hasWonJockeyHor =  True
+    else:
+        hasWonJockeyHor = False
+    if int(jockeyHorRuns) > 0:
+        hasRacedJockeyHor =  True
+    else:
+        hasRacedJockeyHor = False
+    jockeyHorSec = (jockeyHorStats.split()[1]).split('-')[1]
+    jockeyHorThird = (jockeyHorStats.split()[1]).split('-')[2]
+    jockeyHorPlaces = int(jockeyHorSec) + int(jockeyHorThird)
+    if jockeyHorPlaces > 0:
+        hasPlacedJockeyHor = True
+    else:
+        hasPlacedJockeyHor = False
+    if jockeyHorRuns > 0:
+        jockeyHorWinPerc = (int(jockeyHorWin) / int(jockeyHorRuns))*100
+    else:
+        jockeyHorWinPerc = 0
+pattern = re.compile(r'Career(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    careerStats = match[1]
+    totalRuns = careerStats.split()[0]
+    careerRuns = int(totalRuns.replace(':', ''))
+    careerWin = int((careerStats.split()[1]).split('-')[0])
+    if int(careerWin) > 0:
+        hasWonCareer =  True
+    else:
+        hasWonCareer = False
+    careerSec = (careerStats.split()[1]).split('-')[1]
+    careerThird = (careerStats.split()[1]).split('-')[2]
+    careerPlaces = int(careerSec) + int(careerThird)
+    if careerPlaces > 0:
+        hasPlacedCareer = True
+    else:
+        hasPlacedCareer = False
+    if careerRuns > 0:
+        careerWinPerc = (int(careerWin) / int(careerRuns))*100
+    else:
+        careerWinPerc = 0
+aveWinAmount = prizeMoney / careerRuns
+aveWinAmount = str(aveWinAmount)
+aveWinAmount = aveWinAmount.replace(',','')
+aveWinAmount = float(aveWinAmount)
+pattern = re.compile(r'12\smonths(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    twelveMonthsStats = match[1]
+    totalRuns = twelveMonthsStats.split()[0]
+    twelveMonthsRuns = int(totalRuns.replace(':', ''))
+    twelveMonthsWin = int((twelveMonthsStats.split()[1]).split('-')[0])
+    if int(twelveMonthsWin) > 0:
+        hasWonTwelveMonths =  True
+    else:
+        hasWonTwelveMonths = False
+    twelveMonthsSec = (twelveMonthsStats.split()[1]).split('-')[1]
+    twelveMonthsThird = (twelveMonthsStats.split()[1]).split('-')[2]
+    twelveMonthsPlaces = int(twelveMonthsSec) + int(twelveMonthsThird)
+    if twelveMonthsPlaces > 0:
+        hasPlacedTwelveMonths = True
+    else:
+        hasPlacedTwelveMonths = False
+    if twelveMonthsRuns > 0:
+        twelveMonthsWinPerc = (int(twelveMonthsWin) / int(twelveMonthsRuns))*100
+    else:
+        twelveMonthsWinPerc = 0
+pattern = re.compile(r'1st\sUp(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    firstUpStats = match[1]
+    totalRuns = firstUpStats.split()[0]
+    firstRuns = int(totalRuns.replace(':',''))
+    firstWin = int((firstUpStats.split()[1]).split('-')[0])
+    if int(firstWin) > 0:
+        hasWonFirstUp =  True
+    else:
+        hasWonFirstUp = False
+    firstSec = (firstUpStats.split()[1]).split('-')[1]
+    firstThird = (firstUpStats.split()[1]).split('-')[2]
+    firstPlaces = int(firstSec) + int(firstThird)
+    if firstPlaces > 0:
+        hasPlacedFirstUp = True
+    else:
+        hasPlacedFirstUp = False
+    if firstRuns > 0:
+        firstUpWinPerc = (int(firstWin)/int(firstRuns))*100
+    else:
+        firstUpWinPerc = 0
+pattern = re.compile(r'2nd\sUp(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    secondUp = match[1]
+pattern = re.compile(r'3rd\sUp(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    thirdUp = match[1]
+pattern = re.compile(r'Distance(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    distanceStats = match[1]
+    totalRuns = distanceStats.split()[0]
+    distanceRuns = int(totalRuns.replace(':', ''))
+    distanceWin = int((distanceStats.split()[1]).split('-')[0])
+    if int(distanceWin) > 0:
+        hasWonDistance =  True
+    else:
+        hasWonDistance = False
+    if int(distanceRuns) > 0:
+        hasRacedDistance =  True
+    else:
+        hasRacedDistance = False
+    distanceSec = (distanceStats.split()[1]).split('-')[1]
+    distanceThird = (distanceStats.split()[1]).split('-')[2]
+    distancePlaces = int(distanceSec) + int(distanceThird)
+    if distancePlaces > 0:
+        hasPlacedDistance = True
+    else:
+        hasPlacedDistance = False
+    if distanceRuns > 0:
+        distanceWinPerc = (int(distanceWin) / int(distanceRuns))*100
+    else:
+        distanceWinPerc = 0
+pattern = re.compile(r'Track(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    trackStats = match[1]
+    totalRuns = trackStats.split()[0]
+    trackRuns = int(totalRuns.replace(':', ''))
+    trackWin = int((trackStats.split()[1]).split('-')[0])
+    if int(trackWin) > 0:
+        hasWonTrack =  True
+    else:
+        hasWonTrack = False
+    if int(trackRuns) > 0:
+        hasRacedTrack =  True
+    else:
+        hasRacedTrack = False
+    trackSec = (trackStats.split()[1]).split('-')[1]
+    trackThird = (trackStats.split()[1]).split('-')[2]
+    trackPlaces = int(trackSec) + int(trackThird)
+    if trackPlaces > 0:
+        hasPlacedTrack = True
+    else:
+        hasPlacedTrack = False
+    if trackRuns > 0:
+        trackWinPerc = (int(trackWin) / int(trackRuns))*100
+    else:
+        trackWinPerc = 0
+pattern = re.compile(r'Trk\/Dist(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    trackDistStats = match[1]
+    totalRuns = trackDistStats.split()[0]
+    trackDistRuns = int(totalRuns.replace(':', ''))
+    trackDistWin = int((trackDistStats.split()[1]).split('-')[0])
+    if int(trackDistWin) > 0:
+        hasWonTrackDist =  True
+    else:
+        hasWonTrackDist = False
+    if int(trackDistRuns) > 0:
+        hasRacedTrackDist =  True
+    else:
+        hasRacedTrackDist = False
+    trackDistSec = (trackDistStats.split()[1]).split('-')[1]
+    trackDistThird = (trackDistStats.split()[1]).split('-')[2]
+    trackDistPlaces = int(trackDistSec) + int(trackDistThird)
+    if trackDistPlaces > 0:
+        hasPlacedTrackDist = True
+    else:
+        hasPlacedTrackDist = False
+    if trackDistRuns > 0:
+        trackDistWinPerc = (int(trackDistWin) / int(trackDistRuns))*100
+    else:
+        trackDistWinPerc = 0
+pattern = re.compile(r'Firm(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    firmStats = match[1]
+    totalRuns = firmStats.split()[0]
+    firmRuns = int(totalRuns.replace(':', ''))
+    firmWin = int((firmStats.split()[1]).split('-')[0])
+    if int(firmWin) > 0:
+        hasWonFirm =  True
+    else:
+        hasWonFirm = False
+    if int(firmRuns) > 0:
+        hasRacedFirm =  True
+    else:
+        hasRacedFirm = False
+    firmSec = (firmStats.split()[1]).split('-')[1]
+    firmThird = (firmStats.split()[1]).split('-')[2]
+    firmPlaces = int(firmSec) + int(firmThird)
+    if firmPlaces > 0:
+        hasPlacedFirm = True
+    else:
+        hasPlacedFirm = False
+    if firmRuns > 0:
+        firmWinPerc = (int(firmWin) / int(firmRuns))*100
+    else:
+        firmWinPerc = 0
+pattern = re.compile(r'Good(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    goodStats = match[1]
+    totalRuns = goodStats.split()[0]
+    goodRuns = int(totalRuns.replace(':', ''))
+    goodWin = int((goodStats.split()[1]).split('-')[0])
+    if int(goodWin) > 0:
+        hasWonGood =  True
+    else:
+        hasWonGood = False
+    if int(goodRuns) > 0:
+        hasRacedGood =  True
+    else:
+        hasRacedGood = False
+    goodSec = (goodStats.split()[1]).split('-')[1]
+    goodThird = (goodStats.split()[1]).split('-')[2]
+    goodPlaces = int(goodSec) + int(goodThird)
+    if goodPlaces > 0:
+        hasPlacedGood = True
+    else:
+        hasPlacedGood = False
+    if goodRuns > 0:
+        goodWinPerc = (int(goodWin) / int(goodRuns))*100
+    else:
+        goodWinPerc = 0
+pattern = re.compile(r'Soft(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    softStats = match[1]
+    totalRuns = softStats.split()[0]
+    softRuns = int(totalRuns.replace(':', ''))
+    softWin = int((softStats.split()[1]).split('-')[0])
+    if int(softWin) > 0:
+        hasWonSoft =  True
+    else:
+        hasWonSoft = False
+    if int(softRuns) > 0:
+        hasRacedSoft =  True
+    else:
+        hasRacedSoft = False
+    softSec = (softStats.split()[1]).split('-')[1]
+    softThird = (softStats.split()[1]).split('-')[2]
+    softPlaces = int(softSec) + int(softThird)
+    if softPlaces > 0:
+        hasPlacedSoft = True
+    else:
+        hasPlacedSoft = False
+    if softRuns > 0:
+        softWinPerc = (int(softWin) / int(softRuns))*100
+    else:
+        softWinPerc = 0
+pattern = re.compile(r'Heavy(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    heavyStats = match[1]
+    totalRuns = heavyStats.split()[0]
+    heavyRuns = int(totalRuns.replace(':', ''))
+    heavyWin = int((heavyStats.split()[1]).split('-')[0])
+    if int(heavyWin) > 0:
+        hasWonHeavy =  True
+    else:
+        hasWonHeavy = False
+    if int(heavyRuns) > 0:
+        hasRacedHeavy =  True
+    else:
+        hasRacedHeavy = False
+    heavySec = (heavyStats.split()[1]).split('-')[1]
+    heavyThird = (heavyStats.split()[1]).split('-')[2]
+    heavyPlaces = int(heavySec) + int(heavyThird)
+    if heavyPlaces > 0:
+        hasPlacedHeavy = True
+    else:
+        hasPlacedHeavy = False
+    if heavyRuns > 0:
+        heavyWinPerc = (int(heavyWin) / int(heavyRuns))*100
+    else:
+        heavyWinPerc = 0
+pattern = re.compile(r'Win\sRange(.*)')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    winRange = match[1]
+pattern = re.compile(r'Place(\d*)%')
+matches = pattern.finditer(horseBasics.text)
+for match in matches:
+    placeRate = match[1]
